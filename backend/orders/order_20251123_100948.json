@@ -1,0 +1,10 @@
+{
+    "drinkType": "cappuccino",
+    "size": "medium",
+    "milk": "oat",
+    "extras": [
+        "sugar"
+    ],
+    "name": "Deep",
+    "timestamp": "2025-11-23T10:09:48.657766"
+}

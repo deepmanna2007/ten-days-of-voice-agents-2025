@@ -1,0 +1,12 @@
+{
+    "drinkType": "cappuccino",
+    "size": "medium",
+    "milk": "coconut",
+    "extras": [
+        "vanilla",
+        "honey"
+    ],
+    "name": "Deep",
+    "timestamp": "2025-11-23T10:57:09.632552",
+    "session_id": "session_20251123_105709"
+}
