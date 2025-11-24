@@ -1,0 +1,22 @@
+[
+    {
+        "timestamp": "2025-11-24T08:14:27.614346",
+        "mood": "neutral/mediocre",
+        "energy": "low",
+        "objectives": [
+            "complete university syllabus for exam"
+        ],
+        "summary": "You're feeling mediocre/neutral with low energy. Your goal is to complete your university syllabus for an exam; try breaking it into smaller study blocks with breaks."
+    },
+    {
+        "timestamp": "2025-11-24T08:43:38.182080",
+        "mood": "okay",
+        "energy": "tired",
+        "objectives": [
+            "complete all tasks for schedule today",
+            "complete the Morpheus day three challenge",
+            "complete my DSF"
+        ],
+        "summary": "Break down your first objective into smaller chunks to help manage your energy levels since you're feeling a bit tired."
+    }
+]
