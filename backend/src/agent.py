@@ -1,20 +1,19 @@
 # ======================================================
-# 🌿 DAILY WELLNESS VOICE COMPANION
-# 💼 Professional Voice AI Development Course
-# 🚀 Context-Aware Agents & JSON Persistence
+# 🧠 DAY 4: TEACH-THE-TUTOR (DSA EDITION)
+# 🚀 Features: LinkedList, Stack, Queue & Active Recall
 # ======================================================
 
 import logging
 import json
 import os
 import asyncio
-from datetime import datetime
-from typing import Annotated, Literal, List, Optional
-from dataclasses import dataclass, field, asdict
+from typing import Annotated, Literal, Optional
+from dataclasses import dataclass
 
-print("\n" + "🌿" * 50)
+print("\n" + "💻" * 50)
+print("🚀 DSA TUTOR - DAY 4 TUTORIAL")
 print("💡 agent.py LOADED SUCCESSFULLY!")
-print("🌿" * 50 + "\n")
+print("💻" * 50 + "\n")
 
 from dotenv import load_dotenv
 from pydantic import Field
@@ -26,12 +25,11 @@ from livekit.agents import (
     RoomInputOptions,
     WorkerOptions,
     cli,
-    metrics,
-    MetricsCollectedEvent,
-    RunContext,
     function_tool,
+    RunContext,
 )
 
+# 🔌 PLUGINS
 from livekit.plugins import murf, silero, google, deepgram, noise_cancellation
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
@@ -39,177 +37,166 @@ logger = logging.getLogger("agent")
 load_dotenv(".env.local")
 
 # ======================================================
-# 🧠 STATE MANAGEMENT & DATA STRUCTURES
+# 📚 KNOWLEDGE BASE (DSA DATA)
+# ======================================================
+
+# NEW JSON FILE
+CONTENT_FILE = "dsa_content.json" 
+
+# 🆕 NEW DSA TOPICS
+DEFAULT_CONTENT = [
+    {
+        "id": "linkedlist",
+        "title": "Linked List",
+        "summary": "A Linked List is a linear data structure where elements (nodes) are stored at non-contiguous memory locations. Each node contains data and a pointer/reference to the next node. Types include singly, doubly, and circular linked lists.",
+        "sample_question": "What is the difference between an array and a linked list?"
+    },
+    {
+        "id": "stack",
+        "title": "Stack",
+        "summary": "A Stack is a linear data structure that follows the LIFO (Last In, First Out) principle. Elements are inserted (push) and removed (pop) only from the top. It is used in recursion, expression evaluation, and backtracking.",
+        "sample_question": "What is the LIFO principle and how does it apply to a stack?"
+    },
+    {
+        "id": "queue",
+        "title": "Queue",
+        "summary": "A Queue is a linear data structure that follows the FIFO (First In, First Out) principle. Elements are added at the rear (enqueue) and removed from the front (dequeue). Used in scheduling, BFS, and buffering.",
+        "sample_question": "How is a queue different from a stack?"
+    }
+]
+
+def load_content():
+    """
+    📖 Checks if DSA JSON exists. 
+    If NO: Generates it from DEFAULT_CONTENT.
+    If YES: Loads it.
+    """
+    try:
+        path = os.path.join(os.path.dirname(__file__), CONTENT_FILE)
+        
+        if not os.path.exists(path):
+            print(f"⚠️ {CONTENT_FILE} not found. Generating DSA data...")
+            with open(path, "w", encoding='utf-8') as f:
+                json.dump(DEFAULT_CONTENT, f, indent=4)
+            print("✅ DSA content file created successfully.")
+            
+        with open(path, "r", encoding='utf-8') as f:
+            data = json.load(f)
+            return data
+            
+    except Exception as e:
+        print(f"⚠️ Error managing content file: {e}")
+        return []
+
+# Load data immediately
+COURSE_CONTENT = load_content()
+
+# ======================================================
+# 🧠 STATE MANAGEMENT
 # ======================================================
 
 @dataclass
-class CheckInState:
-    """🌿 Holds data for the CURRENT daily check-in"""
-    mood: str | None = None
-    energy: str | None = None
-    objectives: list[str] = field(default_factory=list)
-    advice_given: str | None = None
+class TutorState:
+    current_topic_id: str | None = None
+    current_topic_data: dict | None = None
+    mode: Literal["learn", "quiz", "teach_back"] = "learn"
     
-    def is_complete(self) -> bool:
-        """✅ Check if we have the core check-in data"""
-        return all([
-            self.mood is not None,
-            self.energy is not None,
-            len(self.objectives) > 0
-        ])
-    
-    def to_dict(self) -> dict:
-        return asdict(self)
+    def set_topic(self, topic_id: str):
+        topic = next((item for item in COURSE_CONTENT if item["id"] == topic_id), None)
+        if topic:
+            self.current_topic_id = topic_id
+            self.current_topic_data = topic
+            return True
+        return False
 
 @dataclass
 class Userdata:
-    """👤 User session data passed to the agent"""
-    current_checkin: CheckInState
-    history_summary: str  # String containing info about previous sessions
-    session_start: datetime = field(default_factory=datetime.now)
+    tutor_state: TutorState
+    agent_session: Optional[AgentSession] = None
 
 # ======================================================
-# 💾 PERSISTENCE LAYERS (JSON LOGGING)
-# ======================================================
-WELLNESS_LOG_FILE = "wellness_log.json"
-
-def get_log_path():
-    base_dir = os.path.dirname(__file__)
-    backend_dir = os.path.abspath(os.path.join(base_dir, ".."))
-    return os.path.join(backend_dir, WELLNESS_LOG_FILE)
-
-def load_history() -> list:
-    """📖 Read previous check-ins from JSON"""
-    path = get_log_path()
-    if not os.path.exists(path):
-        return []
-    try:
-        with open(path, "r", encoding='utf-8') as f:
-            data = json.load(f)
-            return data if isinstance(data, list) else []
-    except Exception as e:
-        print(f"⚠️ Could not load history: {e}")
-        return []
-
-def save_checkin_entry(entry: CheckInState) -> None:
-    """💾 Append new check-in to the JSON list"""
-    path = get_log_path()
-    history = load_history()
-    
-    # Create record
-    record = {
-        "timestamp": datetime.now().isoformat(),
-        "mood": entry.mood,
-        "energy": entry.energy,
-        "objectives": entry.objectives,
-        "summary": entry.advice_given
-    }
-    
-    history.append(record)
-    
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding='utf-8') as f:
-        json.dump(history, f, indent=4, ensure_ascii=False)
-        
-    print(f"\n✅ CHECK-IN SAVED TO {path}")
-
-# ======================================================
-# 🛠️ WELLNESS AGENT TOOLS
+# 🛠️ TUTOR TOOLS
 # ======================================================
 
 @function_tool
-async def record_mood_and_energy(
-    ctx: RunContext[Userdata],
-    mood: Annotated[str, Field(description="The user's emotional state (e.g., happy, stressed, anxious)")],
-    energy: Annotated[str, Field(description="The user's energy level (e.g., high, low, drained, energetic)")],
+async def select_topic(
+    ctx: RunContext[Userdata], 
+    topic_id: Annotated[str, Field(description="The ID of the topic (linkedlist, stack, queue)")]
 ) -> str:
-    """📝 Record how the user is feeling. Call this after the user describes their state."""
-    ctx.userdata.current_checkin.mood = mood
-    ctx.userdata.current_checkin.energy = energy
+    state = ctx.userdata.tutor_state
+    success = state.set_topic(topic_id.lower())
     
-    print(f"📊 MOOD LOGGED: {mood} | ENERGY: {energy}")
-    
-    return f"I've noted that you are feeling {mood} with {energy} energy. I'm listening."
+    if success:
+        return f"Topic set to {state.current_topic_data['title']}. Ask if they want to 'Learn', take a 'Quiz', or 'Teach back'."
+    else:
+        available = ", ".join([t["id"] for t in COURSE_CONTENT])
+        return f"Topic not found. Available topics: {available}"
 
 @function_tool
-async def record_objectives(
-    ctx: RunContext[Userdata],
-    objectives: Annotated[list[str], Field(description="List of 1-3 specific goals the user wants to achieve today")],
+async def set_learning_mode(
+    ctx: RunContext[Userdata], 
+    mode: Annotated[str, Field(description="Modes: learn, quiz, teach_back")]
 ) -> str:
-    """🎯 Record the user's daily goals. Call this when user states what they want to do."""
-    ctx.userdata.current_checkin.objectives = objectives
-    print(f"🎯 OBJECTIVES LOGGED: {objectives}")
-    return "I've written down your goals for the day."
+    state = ctx.userdata.tutor_state
+    state.mode = mode.lower()
+    
+    agent_session = ctx.userdata.agent_session 
+    
+    if agent_session:
+        if state.mode == "learn":
+            agent_session.tts.update_options(voice="en-US-matthew", style="Promo")
+            instruction = f"Mode: LEARN. Explain: {state.current_topic_data['summary']}"
+        elif state.mode == "quiz":
+            agent_session.tts.update_options(voice="en-US-alicia", style="Conversational")
+            instruction = f"Mode: QUIZ. Ask this: {state.current_topic_data['sample_question']}"
+        elif state.mode == "teach_back":
+            agent_session.tts.update_options(voice="en-US-ken", style="Promo")
+            instruction = "Mode: TEACH_BACK. Ask the user to explain the topic."
+        else:
+            return "Invalid mode."
+    else:
+        instruction = "Voice switch error."
+
+    print(f"🔄 SWITCHING MODE -> {state.mode.upper()}")
+    return f"Switched to {state.mode} mode. {instruction}"
 
 @function_tool
-async def complete_checkin(
+async def evaluate_teaching(
     ctx: RunContext[Userdata],
-    final_advice_summary: Annotated[str, Field(description="A brief 1-sentence summary of the advice given")],
+    user_explanation: Annotated[str, Field(description="User explanation during teach-back")]
 ) -> str:
-    """💾 Finalize the session, provide a recap, and save to JSON. Call at the very end."""
-    state = ctx.userdata.current_checkin
-    state.advice_given = final_advice_summary
-    
-    if not state.is_complete():
-        return "I can't finish yet. I still need to know your mood, energy, or at least one goal."
-
-    # Save to JSON
-    save_checkin_entry(state)
-    
-    print("\n" + "⭐" * 60)
-    print("🎉 WELLNESS CHECK-IN COMPLETED!")
-    print(f"💭 Mood: {state.mood}")
-    print(f"🎯 Goals: {state.objectives}")
-    print("⭐" * 60 + "\n")
-
-    recap = f"""
-    Here is your recap for today:
-    You are feeling {state.mood} and your energy is {state.energy}.
-    Your main goals are: {', '.join(state.objectives)}.
-    
-    Remember: {final_advice_summary}
-    
-    I've saved this in your wellness log. Have a wonderful day!
-    """
-    return recap
+    print(f"📝 EVALUATING EXPLANATION: {user_explanation}")
+    return "Evaluate the explanation, score it out of 10, and correct mistakes."
 
 # ======================================================
 # 🧠 AGENT DEFINITION
 # ======================================================
 
-class WellnessAgent(Agent):
-    def __init__(self, history_context: str):
+class TutorAgent(Agent):
+    def __init__(self):
+        topic_list = ", ".join([f"{t['id']} ({t['title']})" for t in COURSE_CONTENT])
+        
         super().__init__(
             instructions=f"""
-            You are a compassionate, supportive Daily Wellness Companion.
+            You are a DSA Tutor helping students learn LinkedList, Stack, and Queue.
             
-            🧠 **CONTEXT FROM PREVIOUS SESSIONS:**
-            {history_context}
+            📚 TOPICS: {topic_list}
             
-            🎯 **GOALS FOR THIS SESSION:**
-            1. **Check-in:** Ask how they are feeling (Mood) and their energy levels.
-               - *Reference the history context if available (e.g., "Last time you were tired, how is today?").*
-            2. **Intentions:** Ask for 1-3 simple objectives for the day.
-            3. **Support:** Offer small, grounded, NON-MEDICAL advice.
-               - Example: "Try a 5-minute walk" or "Break that big task into small steps."
-            4. **Recap & Save:** Summarize their mood and goals, then call 'complete_checkin'.
+            MODES:
+            - LEARN (Matthew)
+            - QUIZ (Alicia)
+            - TEACH_BACK (Ken)
 
-            🚫 **SAFETY GUARDRAILS:**
-            - You are NOT a doctor or therapist.
-            - Do NOT diagnose conditions or prescribe treatments.
-            - If a user mentions self-harm or severe crisis, gently suggest professional help immediately.
-
-            🛠️ **Use the tools to record data as the user speaks.**
+            Behavior:
+            - Ask the user which topic they want.
+            - Switch modes using set_learning_mode tool.
+            - Evaluate explanations using evaluate_teaching.
             """,
-            tools=[
-                record_mood_and_energy,
-                record_objectives,
-                complete_checkin,
-            ],
+            tools=[select_topic, set_learning_mode, evaluate_teaching],
         )
 
 # ======================================================
-# 🎬 ENTRYPOINT & INITIALIZATION
+# 🎬 ENTRYPOINT
 # ======================================================
 
 def prewarm(proc: JobProcess):
@@ -218,37 +205,18 @@ def prewarm(proc: JobProcess):
 async def entrypoint(ctx: JobContext):
     ctx.log_context_fields = {"room": ctx.room.name}
 
-    print("\n" + "🌿" * 25)
-    print("🚀 STARTING WELLNESS SESSION")
-    
-    # 1. Load History from JSON
-    history = load_history()
-    history_summary = "No previous history found. This is the first session."
-    
-    if history:
-        last_entry = history[-1]
-        history_summary = (
-            f"Last check-in was on {last_entry.get('timestamp', 'unknown date')}. "
-            f"User felt {last_entry.get('mood')} with {last_entry.get('energy')} energy. "
-            f"Their goals were: {', '.join(last_entry.get('objectives', []))}."
-        )
-        print("📜 HISTORY LOADED:", history_summary)
-    else:
-        print("📜 NO HISTORY FOUND.")
+    print("\n" + "💻" * 25)
+    print("🚀 STARTING DSA TUTOR SESSION")
+    print(f"📚 Loaded {len(COURSE_CONTENT)} DSA topics")
 
-    # 2. Initialize Session Data
-    userdata = Userdata(
-        current_checkin=CheckInState(),
-        history_summary=history_summary
-    )
+    userdata = Userdata(tutor_state=TutorState())
 
-    # 3. Setup Agent
     session = AgentSession(
         stt=deepgram.STT(model="nova-3"),
         llm=google.LLM(model="gemini-2.5-flash"),
         tts=murf.TTS(
-            voice="en-US-natalie", # Using a softer, more caring voice
-            style="Promo",         # Often sounds more enthusiastic/supportive
+            voice="en-US-matthew", 
+            style="Promo",
             text_pacing=True,
         ),
         turn_detection=MultilingualModel(),
@@ -256,9 +224,10 @@ async def entrypoint(ctx: JobContext):
         userdata=userdata,
     )
     
-    # 4. Start
+    userdata.agent_session = session
+    
     await session.start(
-        agent=WellnessAgent(history_context=history_summary),
+        agent=TutorAgent(),
         room=ctx.room,
         room_input_options=RoomInputOptions(
             noise_cancellation=noise_cancellation.BVC()
