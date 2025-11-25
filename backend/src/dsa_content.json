@@ -1,0 +1,20 @@
+[
+    {
+        "id": "linkedlist",
+        "title": "Linked List",
+        "summary": "A Linked List is a linear data structure where elements (nodes) are stored at non-contiguous memory locations. Each node contains data and a pointer/reference to the next node. Types include singly, doubly, and circular linked lists.",
+        "sample_question": "What is the difference between an array and a linked list?"
+    },
+    {
+        "id": "stack",
+        "title": "Stack",
+        "summary": "A Stack is a linear data structure that follows the LIFO (Last In, First Out) principle. Elements are inserted (push) and removed (pop) only from the top. It is used in recursion, expression evaluation, and backtracking.",
+        "sample_question": "What is the LIFO principle and how does it apply to a stack?"
+    },
+    {
+        "id": "queue",
+        "title": "Queue",
+        "summary": "A Queue is a linear data structure that follows the FIFO (First In, First Out) principle. Elements are added at the rear (enqueue) and removed from the front (dequeue). Used in scheduling, BFS, and buffering.",
+        "sample_question": "How is a queue different from a stack?"
+    }
+]
