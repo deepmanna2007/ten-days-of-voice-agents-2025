@@ -1,0 +1,62 @@
+[
+    {
+        "name": "Deep",
+        "company": null,
+        "email": "how.to.learn.new.skills@directgmail.com",
+        "role": "Student",
+        "use_case": "Understand how AI works and how AI systems can help us",
+        "team_size": null,
+        "timeline": null,
+        "timestamp": "2025-11-26T06:58:34.943478"
+    },
+    {
+        "name": "Rohan",
+        "company": null,
+        "email": null,
+        "role": "Personal Interest",
+        "use_case": null,
+        "team_size": null,
+        "timeline": "No particular timeline",
+        "timestamp": "2025-11-26T07:36:16.354303"
+    },
+    {
+        "name": null,
+        "company": null,
+        "email": null,
+        "role": null,
+        "use_case": null,
+        "team_size": null,
+        "timeline": null,
+        "timestamp": "2025-11-26T20:21:30.275551"
+    },
+    {
+        "name": "Deep",
+        "company": null,
+        "email": "howcanIhelpyou@gmail.com",
+        "role": null,
+        "use_case": "build a student help voice agent",
+        "team_size": null,
+        "timeline": "Now",
+        "timestamp": "2025-11-26T20:37:15.318673"
+    },
+    {
+        "name": null,
+        "company": "Bengal College of Engineering and Technology",
+        "email": "howcanilearn@gmail.com",
+        "role": "BTech Student",
+        "use_case": "Build student help voice agent",
+        "team_size": null,
+        "timeline": "Right now",
+        "timestamp": "2025-11-26T21:23:33.236754"
+    },
+    {
+        "name": "Deep",
+        "company": "Bengal College of Engineering and Technology",
+        "email": "how can I help you at direct Gmail dot com",
+        "role": "Student",
+        "use_case": "Student health voice agent",
+        "team_size": null,
+        "timeline": "Now",
+        "timestamp": "2025-11-26T21:39:21.135443"
+    }
+]
